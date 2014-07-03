@@ -1,4 +1,4 @@
-mobile
-======
+web
+===
 
-web mobile version
+This is an online price bidding (lowering the price) of an item for sale online.
