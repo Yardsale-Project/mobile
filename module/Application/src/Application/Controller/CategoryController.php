@@ -4,292 +4,192 @@ namespace Application\Controller;
 use Application\Controller\Controller;
 
 use Zend\View\Model\JsonModel;
-use Zend\Crypt\Password\Bcrypt;
 
 use \Exception;
 
 class CategoryController extends Controller
 {
 
+    /**
+    * filter = [
+    *    { property : 'active', value : 1},
+    * ];
+    */
     public function indexAction()
     {
-        $retVal = array(
-            'succcess'  => true,
-            'children'  => array(
-                array(
-                    'text'      => 'Category 1',
-                    'children'  => array(
-                        array(
-                            'text'  => 'Subcat 1,1',
-                            'leaft' => true
-                        )
-                    )
-                ),
-                array(
-                    'text'  => 'Category 2'
-                ),
-                array(
-                    'text'  => 'Category 3',
-                    'children'  => array(
-                        array(
-                            'text'  => 'Subcat 3,1',
-                            'leaft' => true
-                        ),
-                        array(
-                            'text'  => 'Subcat 3,2',
-                            'leaft' => true
-                        )
-                    )
-                )
-            )
-        );
 
-        return new JsonModel($retVal);   
-    }
-
-    /*public function getUsersAction()
-    {
-        $retVal = array(
-            'success'       => false,
-            'rows'          => array(),
-            'totalRecords'  => 0
-        );
-
-        $users = $this->model('Users');
-        $result = $users->getUsers();
-
-        if(!empty($users))
-        {
-            $retVal['success'] = true;
-            $retVal['rows'] = $result;
-            $retVal['totalRecords'] = count($result);
-        }
+        $retVal     = array();
+        $request    = $this->getRequest();
 
 
-        return new JsonModel($retVal);
-    }
-
-    public function saveUserAction()
-    {
-        $data = array();
-        $retVal = array();
-        $file_temp = "";
-        $new_path = null;
-
-        $request = $this->getRequest();
-
-        if ($request->isPost()) 
-        {
+        if( $request->isPost() ) {
             $postData = $request->getPost();
-            $fileData = $request->getFiles();
 
-            $userId = (!empty($postData['user_id'])) ? $postData['user_id'] : 0;
-            $username = (!empty($postData['username'])) ? $postData['username'] : '';
-            $password = (!empty($postData['password'])) ? $postData['password'] : '';
-            $firstname = (!empty($postData['firstname'])) ? $postData['firstname'] : '';
-            $middlename = (!empty($postData['middlename'])) ? $postData['middlename'] : '';
-            $lastname = (!empty($postData['lastname'])) ? $postData['lastname'] : '';
-            $email = (!empty($postData['email'])) ? $postData['email'] : '';
-            $address = (!empty($postData['address'])) ? $postData['address'] : '';
-            $gender = (!empty($postData['gender'])) ? $postData['gender'] : '';
-            $role = (!empty($postData['role'])) ? $postData['role'] : 0;
-            $deactivate = (!empty($postData['deactivate'])) ? $postData['deactivate'] : '';
-            $photo = (!empty($fileData['img-photo'])) ? $fileData['img-photo'] : array();
+            $isTree = ( !empty($postData['isTree']) )? $postData['isTree'] : false;
 
-            if(!empty($photo['size']))
-            {
-                $file       = $photo;
-                $file_name  = $file["name"];
-                $file_temp  = $file["tmp_name"];
-                
-                $parts      = explode('.', $file_name);
-                $ext        = $parts[1];
-                $photo       = date('Y_m_d') . '_' . $username . '.' . $ext;
-            }
-            else
-            {
-                $photo = null;
+            $model = $this->model('Category');
+            $result = $model->getCategories();
+
+            if( $isTree === 'true' ) {
+
+                $retVal = array(
+                    'text'   => '.',
+                    'children'   => $this->_createTree($result),
+                    'totalRecords'  => '3'
+                );
+            } else {
+                $retVal = array(
+                    'success'   => true,
+                    'message'   => 'Success',
+                    'totalRecords'  => '6',
+                    'result'    => $result
+                );
             }
             
-            //check for duplicate username
-            $users = $this->model('Users');
-            $usernameResult = array();
-
-            if(!empty($postData['usernameEdit']))
-            {
-                $usernameResult = $users->getUserAccount($username);
-            }
-
-            if(!empty($usernameResult))
-            {
-                $retVal = array(
-                    "success" => false,
-                    "errorMessage" => 'Username "' . $username . '" already exist'
-                );
-            }
-            else
-            {
-                $bcrypt = new Bcrypt();
-                $securePass = $bcrypt->create($password);
-
-
-                if(!empty($photo))
-                {
-                    $new_path = move_uploaded_file($file_temp,  ROOTH_PATH . "/public/img/userPic/" . $photo);
-                }
-
-
-                if(empty($userId))
-                {
-                    $data = array(
-                        'username' => $username,
-                        'password' => $securePass,
-                        'fName'     => $firstname,
-                        'midName'   => $middlename,
-                        'lName'     => $lastname,
-                        'email'     => $email,
-                        'address'   => $address,
-                        'gender'    => $gender,
-                        'createDate'=> date('Y-m-d H:i:s'),
-                        'picLocation'=> $photo,
-                        'deactivated'=> ($deactivate)? 'Y' :'N',
-                        'role'      => $role
-                    );
-
-                    if (empty($new_path) && !empty($photo)) 
-                    {
-                        $retVal = array(
-                            'success'       => false,
-                            'errorMessage' => 'Error uploading photo'
-                        );
-                    }
-                    else
-                    {
-                        $affected_rows = $users->addUser($data);
-
-                        if(empty($affected_rows))
-                        {
-                            $retVal = array(
-                                'success'       => false,
-                                'errorMessage' => 'Adding new user failed'
-                            );
-                        }
-                        else
-                        {
-                            $retVal = array(
-                                'success'       => true,
-                                'message' => 'New user added successfully'
-                            );
-                        }
-                    }
-                }
-                else
-                {
-                    $data = array(
-                        'username' => $username,
-                        'fName'     => $firstname,
-                        'midName'   => $middlename,
-                        'lName'     => $lastname,
-                        'email'     => $email,
-                        'address'   => $address,
-                        'gender'    => $gender,
-                        'updateDate'=> date('Y-m-d H:i:s'),
-                        'deactivated'=> ($deactivate)? 'Y' :'N',
-                        'role'      => $role
-                    );
-
-                    if(!empty($photo))
-                    {
-                        $data['picLocation'] = $photo;
-                    }
-
-                    if(!empty($password))
-                    {
-                        $data['password'] = $securePass;
-                    }
-
-                    if (empty($new_path) && !empty($photo)) 
-                    {
-                        $retVal = array(
-                            'success'       => false,
-                            'errorMessage' => 'Error uploading photo'
-                        );
-                    }
-                    else
-                    {
-                        $affected_rows = $users->updateUser($data, $userId);
-
-                        if(empty($affected_rows))
-                        {
-                             $retVal = array(
-                                'success'       => false,
-                                'errorMessage' => 'Updating user failed'
-                            );
-                        }
-                        else
-                        {
-                            $retVal = array(
-                                'success'       => true,
-                                'message' => 'User updated successfully'
-                            );
-                        }
-                    }
-                }
-            }
         }
-        else
-        {
-            $retVal = array(
-                'success'       => false,
-                'errorMessage' => 'Invalid request'
-            );
-        }
-
 
         return new JsonModel($retVal);
     }
 
-    public function deleteUserAction()
-    {
+    private function _createTree(&$list) {
+        $shiftedVal = array_shift($list);
+
         $retVal = array();
+        $nodeVal = array();
 
-        $request = $this->getRequest();
+        foreach ($list as $key => $node) {
+            $nodeVal = array();
 
-        if ($request->isPost()) 
-        {
+            if( 
+                $node['lft'] < $node['rgt'] &&
+                $node['lft'] > $shiftedVal['lft'] &&
+                $node['rgt'] < $shiftedVal['rgt']
+            ) {
+                $nodeVal['text'] = $node['name'];
+                $nodeVal['id'] = $node['id'];
+                $nodeVal['description'] = $node['description'];
+
+                if( $node['lft'] + 1 == $node['rgt']) {
+                    $nodeVal['leaf'] = 'true';
+
+                    unset($list[$key]);
+                }else if( $node['lft'] + 1 < $node['rgt'] ) {
+
+                    //$list = array_slice($list, $key);
+                    $nodeVal['leaf'] = 'false';
+                    $nodeVal['children'] = $this->_createTree( $list );
+
+                    prev($list);
+                }
+
+                $retVal[] = $nodeVal;
+
+            } else {
+                break;
+            }
+
+        }
+
+        return $retVal;
+    }
+
+    public function addCategoryAction() {
+        $retVal     = array();
+        $request    = $this->getRequest();
+
+
+        if( $request->isPost() ) {
             $postData = $request->getPost();
 
-            $userId = isset($postData['user_id']) ? $postData['user_id'] : 0;
+            $name           = ( !empty($postData['name']) )? $postData['name'] : '';
+            $description    = ( !empty($postData['description']) )? $postData['description'] : '';
+            $catId          = ( !empty($postData['cat_id']) )? $postData['cat_id'] : 0;
+            $parentId       = ( !empty($postData['parent_id']) )? $postData['parent_id'] : 0;
 
-            if(empty($userId))
-            {
-                $retVal = array(
-                    'success'       => false,
-                    'errorMessage' => 'Please select a record to delete.'
+            $model = $this->model('Category');
+            if(empty($catId)) {
+                //add
+                $data = array(
+                    'name' => $name,
+                    'description' => $description
                 );
-            }
-            else
-            {
-                $user = $this->model('Users');
-                $affected_rows = $user->deleteUser($userId);
+                $lastInsertId = $model->addCategory($data);
 
-                if(empty($affected_rows))
-                {
-                    $retVal = array(
-                        'success'       => false,
-                        'errorMessage' => 'Delete failed.'
-                    );
-                }
-                else
-                {
-                    $retVal = array(
-                        'success'       => true,
-                        'message' => 'Record deleted successfully.'
-                    );
-                }
+                $catId = $lastInsertId;
+
+                $result = $model->getLftRgt($parentId);
+                $rgt = $result['rgt'];
+
+                $model->updateLftRgt( $rgt-1 , ' + 2');
+
+                $data = array(
+                    'category_id' => $catId,
+                    'lft' => $rgt,
+                    'rgt' => $rgt + 1
+                );
+                $model->insertNode($data);
+
+                $retVal['success'] = true;
+                $retVal['message'] = 'Category Added';
+            } else {
+                //update
+                $data = array(
+                    'name' => $name,
+                    'description' => $description
+                );
+
+                $where = array( 'id' => $catId);
+                $model->updateCategory($data, $where);
+
+                $retVal['success'] = true;
+                $retVal['message'] = 'Category Updated';
             }
+
+        } else {
+            $retVal['success'] = false;
+            $retVal['errorMessage'] = 'Invalid request';
         }
 
         return new JsonModel($retVal);
-    }*/
+    }
+
+    public function deleteCategoryAction() {
+        $retVal     = array();
+        $request    = $this->getRequest();
+
+
+        if( $request->isPost() ) {
+            $postData = $request->getPost();
+
+            $catId = ( !empty($postData['cat_id']) )? $postData['cat_id'] : 0;
+
+            $model = $this->model('Category');
+
+            if(!empty($catId)) {
+                $model->deleteCategoryById($catId);
+
+                $result = $model->getLftRgt($catId);
+
+                $lft = $result['lft'];
+                $rgt = $result['rgt'];
+                $id  = $result['id'];
+
+                $diff = $rgt - $lft + 1;
+
+                $model->deleteFromCatTree($lft, $rgt);
+                $model->updateLftRgt( $rgt , ' - ' . $diff);
+
+                $retVal['success'] = true;
+                $retVal['message'] = 'Category deleted';
+            } else {
+                $retVal['success'] = false;
+                $retVal['errorMessage'] = 'No category selected';
+            }
+        } else {
+            $retVal['success'] = false;
+            $retVal['errorMessage'] = 'Invalid request';
+        }
+
+        return new JsonModel($retVal);
+    }
 }

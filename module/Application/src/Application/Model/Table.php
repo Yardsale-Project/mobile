@@ -8,6 +8,7 @@ use Zend\Db\Sql\Select;
 use Zend\Db\Sql\Update;
 use Zend\Db\Sql\Insert;
 use Zend\Db\Sql\Delete;
+use Zend\Db\Expr;
 
 class Table
 {
@@ -49,7 +50,7 @@ class Table
         {
             $statement = $select;
         }
-
+        //var_dump($statement);
         $result = $statement->execute()->current();
         return $result;
     }
