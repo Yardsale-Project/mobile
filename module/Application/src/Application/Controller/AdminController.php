@@ -16,7 +16,7 @@ class AdminController extends Controller
     {
         $host = $this->getRequest()->getServer('HTTP_HOST');
         
-        /*if($this->MobileDetect()->isMobile())
+        if($this->MobileDetect()->isMobile())
         {
 
            $host = str_replace('local.', '', $host);
@@ -26,7 +26,7 @@ class AdminController extends Controller
            $this->plugin('redirect')->toUrl($url);
 
            return false;
-        }*/
+        }
 
         $token  = $this->NoCSRF()->generate('token');
 
