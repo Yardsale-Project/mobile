@@ -10,8 +10,6 @@ use Zend\Http\Client;
 
 use \Exception;
 
-require_once 'autoload.php';
-
 use Facebook\FacebookSession;
 use Facebook\FacebookRedirectLoginHelper;
 use Facebook\FacebookRequest;
@@ -145,12 +143,12 @@ class FacebookController extends Controller
             $retVal['success'] = false;
             $retVal['errorMessage'] = $ex->getMessage();
 
-            return new JsonModel($retVal);
+            $fbSession = null;
         } catch(\Exception $ex) {
             $retVal['success'] = false;
             $retVal['errorMessage'] = $ex->getMessage();
 
-            return new JsonModel($retVal);
+            $fbSession = null;
         }
         
 

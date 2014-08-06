@@ -100,12 +100,13 @@ return array(
     ),
     'controllers' => array(
         'invokables' => array(
-            'Application\Controller\Index' => 'Application\Controller\IndexController',
-            'Application\Controller\Category' => 'Application\Controller\CategoryController',
-            'Application\Controller\Product' => 'Application\Controller\ProductController',
-            'Application\Controller\User' => 'Application\Controller\UserController',
-            'Application\Controller\Admin' => 'Application\Controller\AdminController',
-            'Application\Controller\Facebook' => 'Application\Controller\FacebookController'
+            'Application\Controller\Index'      => 'Application\Controller\IndexController',
+            'Application\Controller\Category'   => 'Application\Controller\CategoryController',
+            'Application\Controller\Product'    => 'Application\Controller\ProductController',
+            'Application\Controller\User'       => 'Application\Controller\UserController',
+            'Application\Controller\Admin'      => 'Application\Controller\AdminController',
+            'Application\Controller\Sns'   => 'Application\Controller\SnsController',
+            'Application\Controller\Payment'   => 'Application\Controller\PaymentController'
         ),
     ),
     'controller_plugins' => array(
@@ -113,6 +114,7 @@ return array(
             'NoCSRF' => 'Application\Controller\Plugin\NoCSRF',
             'Report' => 'Application\Controller\Plugin\Report',
             'MobileDetect' => 'Application\Controller\Plugin\MobileDetect',
+            'HTTP' => 'Application\Controller\Plugin\HTTP',
         ),
     ),
     'view_manager' => array(
@@ -137,7 +139,16 @@ return array(
     'console' => array(
         'router' => array(
             'routes' => array(
-            ),
-        ),
-    ),
+                'payment' => array(
+                    'options' => array(
+                        'route'    => 'payment pay [--verbose|-v]',
+                        'defaults' => array(
+                            'controller' => 'Application\Controller\Payment',
+                            'action'     => 'pay'
+                        )
+                    )
+                ),
+            )
+        )
+    )
 );

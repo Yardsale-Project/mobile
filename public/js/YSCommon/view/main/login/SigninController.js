@@ -54,7 +54,8 @@ Ext.define('YSCommon.view.main.login.SigninController', {
     		signInBtn,
     		orTbText,
     		registerBtn,
-    		logoutToken;
+    		logoutToken,
+            navigation;
 
     	if( form.isValid()) {
     		form.submit({
@@ -66,6 +67,7 @@ Ext.define('YSCommon.view.main.login.SigninController', {
            			orTbText 	= Ext.ComponentQuery.query('#orTbText')[0];
            			registerBtn = Ext.ComponentQuery.query('#registerBtn')[0];
            			logoutToken = Ext.ComponentQuery.query('#logoutToken')[0];
+                    navigation = Ext.ComponentQuery.query('#navigation')[0];
 
            			accountBtn.setText( me.lookupReference('email').getValue() );
 
@@ -73,6 +75,7 @@ Ext.define('YSCommon.view.main.login.SigninController', {
            			orTbText.hide();
            			registerBtn.hide();
            			accountBtn.show();
+                    navigation.show();
 
            			me.requestCSRFToken(this, logoutToken);
            			
@@ -98,6 +101,62 @@ Ext.define('YSCommon.view.main.login.SigninController', {
 			    }
     		});
     	}
+    },
+
+    onSubmitBtnPayClick : function() {
+        var me = this;
+        var form = me.view.getForm();
+        var accountBtn,
+            signInBtn,
+            orTbText,
+            registerBtn,
+            logoutToken,
+            navigation;
+
+        if( form.isValid()) {
+            form.submit({
+                url     : YSConfig.url + '/application/user/loginUser',
+                waitMsg : 'Logging in...',
+                success : function( frm, action ) {
+                    accountBtn  = Ext.ComponentQuery.query('#accountBtn')[0];
+                    signInBtn   = Ext.ComponentQuery.query('#signInBtn')[0];
+                    orTbText    = Ext.ComponentQuery.query('#orTbText')[0];
+                    registerBtn = Ext.ComponentQuery.query('#registerBtn')[0];
+                    logoutToken = Ext.ComponentQuery.query('#logoutToken')[0];
+                    navigation = Ext.ComponentQuery.query('#navigation')[0];
+
+                    accountBtn.setText( me.lookupReference('email').getValue() );
+
+                    signInBtn.hide();
+                    orTbText.hide();
+                    registerBtn.hide();
+                    accountBtn.show();
+                    navigation.show();
+
+                    me.requestCSRFToken(this, logoutToken);
+                    
+                    form.reset();
+                    me.view.up('window').close();
+                    
+                    location.reload();
+                },
+                failure : function( frm, action ) {
+                    YSDebug.log(action.result);
+                    Ext.Msg.show({
+                        title       : 'Sign in',
+                        msg         : action.result.errorMessage,
+                        buttons     : Ext.MessageBox.OK,
+                        fn          : function(btn) {
+                            if(btn === 'ok') {
+                                form.reset();
+                                me.lookupReference('token').setValue(me.token);
+                            }
+                        }, 
+                        icon        : Ext.MessageBox.ERROR
+                    });
+                }
+            });
+        }
     },
 
     onFbLoginBtnClick : function() {
@@ -127,12 +186,14 @@ Ext.define('YSCommon.view.main.login.SigninController', {
                     registerBtn.hide();
                     accountBtn.show();
 
-                    me.requestCSRFToken(this, logoutToken);
+                    me.requestCSRFToken(me, logoutToken);
+
+                    me.redirectTo('home/fbInvite');
                     
                     form.reset();
                     me.view.up('window').close();
 
-                    me.redirectTo('home/fb');
+                    
                 },
                 failure : function( frm, action ) {
                     YSDebug.log(action.result);
@@ -150,6 +211,52 @@ Ext.define('YSCommon.view.main.login.SigninController', {
                     });
                 }
             });
+        }
+    },
+
+    loggedInCallback : function(obj, resp) {
+        obj.redirectTo('home/fbInvite');
+        /*FB.getLoginStatus(function(response) {
+            obj.statusChangeCallback(obj, response);
+        });*/
+    },
+
+    statusChangeCallback : function(obj, response) {
+        if (response.status === 'connected') {
+
+            FB.ui({
+                method: 'apprequests',
+                message : 'This is a test message from Yardsale',
+                title   : 'Yardsale',
+                data    : { referer : 1231},
+                link: 'http://yardsale.druidinc.com',
+            });
+            
+        } else if (response.status === 'not_authorized') {
+            // The person is logged into Facebook, but not your app.
+        } else {
+            // The person is not logged into Facebook, so we're not sure if
+            // they are logged into this app or not.
+
+            FB.login(
+                function(response) {
+                    // handle the response
+                    if (response.status === 'connected') {
+                        FB.ui({
+                            method: 'apprequests',
+                            message : 'This is a test message from Yardsale',
+                            title   : 'Yardsale',
+                            data    :'http://yardsale.druidinc.com/123456',
+                            link: 'http://yardsale.druidinc.com',
+                        });
+                    } else if (response.status === 'not_authorized') {
+                        // The person is logged into Facebook, but not your app.
+                    } else {
+                        // The person is not logged into Facebook, so we're not sure if
+                        // they are logged into this app or not.
+                    }
+                }, {scope: 'xmpp_login, user_friends, publish_actions'}
+            );
         }
     },
 
